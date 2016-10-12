@@ -18,6 +18,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Batteries
                      , Control.Monad.Batteries
+                     , Data.Bifunctor.Batteries
                      , Data.Char.Batteries
                      , Data.Either.Batteries
                      , Data.Function.Batteries

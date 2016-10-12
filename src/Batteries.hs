@@ -3,6 +3,7 @@ module Batteries
   ) where
 
 import Control.Monad.Batteries   as BatteryExports
+import Data.Bifunctor.Batteries  as BatteryExports
 import Data.Char.Batteries       as BatteryExports
 import Data.Either.Batteries     as BatteryExports
 import Data.Function.Batteries   as BatteryExports
