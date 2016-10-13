@@ -2,7 +2,7 @@ module Data.List.Batteries
   ( readLst
   , lengthIs, lengthLT, lengthGT, lengthLET, lengthGET
   , alone, some, several
-  , headM, lastN
+  , headM, headThrow, tailThrow, lastN
   , picks
   , groupOn, splitOn
   , dedup, elemOrd, maximumOn, sortGroupOn
@@ -43,6 +43,14 @@ several = not . alone
 
 headM :: [a] -> Maybe a
 headM = listToMaybe
+
+headThrow :: String -> [a] -> a
+headThrow errMsg []    = error errMsg
+headThrow _      (x:_) = x
+
+tailThrow :: String -> [a] -> [a]
+tailThrow errMsg []     = error errMsg
+tailThrow _      (_:xs) = xs
 
 lastN :: Int -> [a] -> [a]
 lastN n = foldl' (const . tail) <*> drop n
