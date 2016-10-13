@@ -10,4 +10,5 @@ import Data.Function.Batteries   as BatteryExports
 import Data.List.Batteries       as BatteryExports
 import Data.String.Batteries     as BatteryExports
 import Data.String.ANSI          as BatteryExports
+import Data.Text.Batteries       as BatteryExports
 import System.IO.Batteries       as BatteryExports
