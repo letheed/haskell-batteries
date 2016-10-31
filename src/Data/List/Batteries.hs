@@ -1,5 +1,6 @@
 module Data.List.Batteries
   ( readLst
+  , singleton
   , lengthIs, lengthLT, lengthGT, lengthLET, lengthGET
   , alone, some, several
   , headM, headThrow, tailThrow, lastN
@@ -31,6 +32,9 @@ lengthLET n = null . drop n
 
 lengthGET :: Int -> [a] -> Bool
 lengthGET n = not . null . drop (n-1)
+
+singleton :: a -> [a]
+singleton = (:[])
 
 alone :: [a] -> Bool
 alone = null . drop 1
