@@ -4,7 +4,7 @@ module Data.List.Batteries
   , lengthIs, lengthLT, lengthGT, lengthLET, lengthGET
   , alone, some, several
   , headM, headThrow, tailThrow, lastN
-  , maximumIndex, minimumIndex
+  , maximumIndex, minimumIndex, maximumIndices, minimumIndices
   , picks
   , groupOn, splitOn
   , dedup, elemOrd, maximumOn, sortGroupOn
@@ -65,6 +65,12 @@ maximumIndex = fst . maximumBy (comparing snd) . zip [0..]
 
 minimumIndex :: (Ord a) => [a] -> Int
 minimumIndex = fst . minimumBy (comparing snd) . zip [0..]
+
+maximumIndices :: (Ord a) => [a] -> [Int]
+maximumIndices = map fst . head . groupBy ((==) `on` snd) . sortBy (flip (comparing snd)) . zip [0..]
+
+minimumIndices :: (Ord a) => [a] -> [Int]
+minimumIndices = map fst . head . groupBy ((==) `on` snd) . sortBy (comparing snd) . zip [0..]
 
 picks :: [a] -> [(a, [a])]
 picks []     = []
