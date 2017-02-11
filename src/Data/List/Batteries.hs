@@ -4,6 +4,7 @@ module Data.List.Batteries
   , lengthIs, lengthLT, lengthGT, lengthLET, lengthGET
   , alone, some, several
   , headM, headThrow, tailThrow, lastN
+  , maximumIndex, minimumIndex
   , picks
   , groupOn, splitOn
   , dedup, elemOrd, maximumOn, sortGroupOn
@@ -58,6 +59,12 @@ tailThrow _      (_:xs) = xs
 
 lastN :: Int -> [a] -> [a]
 lastN n = foldl' (const . tail) <*> drop n
+
+maximumIndex :: (Ord a) => [a] -> Int
+maximumIndex = fst . maximumBy (comparing snd) . zip [0..]
+
+minimumIndex :: (Ord a) => [a] -> Int
+minimumIndex = fst . minimumBy (comparing snd) . zip [0..]
 
 picks :: [a] -> [(a, [a])]
 picks []     = []
