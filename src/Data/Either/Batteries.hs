@@ -6,20 +6,21 @@ module Data.Either.Batteries
   ( -- ** Contructors
     ifThenEither
     -- ** Conversions
-  , blame, favor
-  , blameMap, favorMap
+    , mirrorE
+      -- *** from Maybe
+  , blame, only
+  , blameMap, onlyMap
+      -- *** to Maybe
   , maybeRight, maybeLeft
-  , mirrorE
     -- ** Maps
   , mapRight, mapLeft
     -- ** Unwrapping
-    -- *** Safe
+      -- *** Safe
   , rightOr, leftOr
   , handleLeft, handleRight
-    -- *** Unsafe
-  , fromRight, fromLeft, expect, reject
-  -- , fromRight', fromLeft', expect', reject'
-  --   -- *** Lists
+      -- *** Unsafe
+    , fromRight, fromLeft, expect, reject
+    , fromRight', fromLeft', expect', reject'
     -- ** Conjunctions and disjunctions
   , andE, andThen, andWith
   , orE, orElse, orWith
@@ -38,7 +39,6 @@ import Control.Monad.Fix
 import Data.Bifunctor
 import Data.Data
 import Data.Functor.Classes
-import Data.Semigroup
 import GHC.Generics
 
 infixr 3 `andE`
@@ -52,43 +52,37 @@ infixl 1 `orElse`
 ifThenEither :: Bool -> e -> a -> Either e a
 ifThenEither cond l r = if cond then Left l else Right r
 
--- | Converts a `Maybe` into an `Either`,
--- mapping `Nothing` to the provided error value.
+-- | Maps `Just` to `Right` and Nothing` to the provided error value.
 blame :: e -> Maybe a -> Either e a
 blame _ (Just a) = Right a
 blame e Nothing  = Left e
 
--- | Converts a `Maybe` into an `Either`,
--- mapping `Nothing` to the provided success value.
-favor :: a -> Maybe e -> Either e a
-favor _ (Just e) = Left e
-favor a Nothing  = Right a
+-- | Maps `Just` to `Left` and Nothing` to the provided success value.
+only :: a -> Maybe e -> Either e a
+only a Nothing  = Right a
+only _ (Just e) = Left e
 
--- | Converts a `Maybe` into an `Either`,
--- mapping `Nothing` to the provided error value
--- and `Just` to `Right`, applying f to the contained value.
+-- | Maps Nothing` to the provided error value,
+-- and `Just` to `Right`, applying f to the contained value,
 blameMap :: e -> (a -> b) -> Maybe a -> Either e b
 blameMap _ f (Just a) = Right (f a)
 blameMap e _ Nothing  = Left e
 
--- | Converts a `Maybe` into an `Either`,
--- mapping `Nothing` to the provided success value
+-- | Maps `Nothing` to the provided success value
 -- and `Just` to `Left`, applying f to the contained value.
-favorMap :: a -> (e -> f) -> Maybe e -> Either f a
-favorMap _ f (Just e) = Left (f e)
-favorMap a _ Nothing  = Right a
+onlyMap :: a -> (e -> f) -> Maybe e -> Either f a
+onlyMap a _ Nothing  = Right a
+onlyMap _ f (Just e) = Left (f e)
 
--- | Converts an `Either` into a `Maybe`,
--- discarding the error value if any.
+-- | Discards the error value if any.
 maybeRight :: Either e a -> Maybe a
 maybeRight (Right a) = Just a
 maybeRight (Left  _) = Nothing
 
--- | Converts an `Either` into a `Maybe`,
--- discarding the success value if any.
+-- | Discards the success value if any.
 maybeLeft :: Either e a -> Maybe e
-maybeLeft (Right _) = Nothing
 maybeLeft (Left  e) = Just e
+maybeLeft (Right _) = Nothing
 
 -- | Converts a `Right` into a `Left`
 -- and a `Left` into a `Right`.
@@ -124,6 +118,7 @@ leftOr val = either id (const val)
 handleLeft :: (e -> a) -> Either e a -> a
 handleLeft f = either f id
 
+{-# ANN handleRight "HLint: ignore Eta reduce" #-}
 -- | Unwraps an `Either`, yielding the content of a `Left`
 -- or calls a function on the `Right` value.
 handleRight :: (a -> e) -> Either e a -> e
@@ -132,66 +127,64 @@ handleRight f = either id f
 -- | Unwraps an `Either`, yielding the content of a `Right`.
 --
 -- Produces an error if the value is a `Left`.
-fromRight :: Either e a -> a
-fromRight (Right a) = a
-fromRight (Left  _) = error "fromRight: Left"
+fromRight' :: Either e a -> a
+fromRight' = expect' "fromRight: Left"
 
 -- | Unwraps an `Either`, yielding the content of a `Left`.
 --
 -- Produces an error if the value is a `Right`.
-fromLeft :: Either e a -> e
-fromLeft (Left  e) = e
-fromLeft (Right _) = error "fromLeft: Right"
+fromLeft' :: Either e a -> e
+fromLeft' = reject' "fromLeft: Right"
 
 -- | Unwraps an `Either`, yielding the content of a `Right`.
 --
 -- Produces an error if the value is a `Left`,
 -- with a message provided by the `String`.
-expect :: String -> Either e a -> a
-expect _      (Right a) = a
-expect errMsg (Left  _) = error errMsg
+expect' :: String -> Either e a -> a
+expect' _      (Right a) = a
+expect' errMsg (Left  _) = error errMsg
 
 -- | Unwraps an `Either`, yielding the content of a `Left`.
 --
 -- Produces an error if the value is a `Right`,
 -- with a message provided by the `String`.
-reject :: String -> Either e a -> e
-reject errMsg (Right _) = error errMsg
+reject' :: String -> Either e a -> e
+reject' _      (Left  e) = e
+reject' errMsg (Right _) = error errMsg
+
+-- | Produces an error with a message and a printable value.
+errorMsgVal :: (Show value) => String -> value -> a
+errorMsgVal msg value = error $ msg ++ " " ++ show value
+
+-- | Unwraps an `Either`, yielding the content of a `Right`.
+--
+-- Produces an error if the value is a `Left`,
+-- with a message provided by the `Left`'s value.
+fromRight :: (Show e) => Either e a -> a
+fromRight = expect "fromRight: Left"
+
+-- | Unwraps an `Either`, yielding the content of a `Left`.
+--
+-- Produces an error if the value is a `Right`,
+-- with a message provided by the `Right`'s value.
+fromLeft :: (Show a) => Either e a -> e
+fromLeft = reject "fromLeft: Right"
+
+-- | Unwraps an `Either`, yielding the content of a `Right`.
+--
+-- Produces an error if the value is a `Left`, with a message
+-- provided by the `String` and the content of the Left.
+expect :: (Show e) => String -> Either e a -> a
+expect _      (Right a) = a
+expect errMsg (Left  e) = errorMsgVal errMsg e
+
+-- | Unwraps an `Either`, yielding the content of a `Left`.
+--
+-- Produces an error if the value is a `Right`, with a message
+-- provided by the `String` and the content of the Right.
+reject :: (Show a) => String -> Either e a -> e
 reject _      (Left  e) = e
-
--- -- | Produces an error with a message and a printable value.
--- errorMsgVal :: (Show value) => String -> value -> a
--- errorMsgVal msg value = error $ msg ++ " " ++ show value
-
--- -- | Unwraps an `Either`, yielding the content of a `Right`.
--- --
--- -- Produces an error if the value is a `Left`,
--- -- with a message provided by the `Left`'s value.
--- fromRight' :: (Show e) => Either e a -> a
--- fromRight' = expect' "fromRight: Left"
-
--- -- | Unwraps an `Either`, yielding the content of a `Left`.
--- --
--- -- Produces an error if the value is a `Right`,
--- -- with a message provided by the `Right`'s value.
--- fromLeft' :: (Show a) => Either e a -> e
--- fromLeft' = reject' "fromLeft: Right"
-
--- -- | Unwraps an `Either`, yielding the content of a `Right`.
--- --
--- -- Produces an error if the value is a `Left`, with a message
--- -- provided by the `String` and the content of the Left.
--- expect' :: (Show e) => String -> Either e a -> a
--- expect' _        (Right a) = a
--- expect' errMsg (Left e)  = errorMsgVal errMsg e
-
--- -- | Unwraps an `Either`, yielding the content of a `Left`.
--- --
--- -- Produces an error if the value is a `Right`, with a message
--- -- provided by the `String` and the content of the Right.
--- reject' :: (Show a) => String -> Either e a -> e
--- reject' errMsg (Right a) = errorMsgVal errMsg a
--- reject' _        (Left e)  = e
+reject errMsg (Right a) = errorMsgVal errMsg a
 
 -- | Returns the last `Either` if all previous were successful,
 -- or at the first failure encountered.
@@ -204,8 +197,7 @@ Left  e `andE` _ = Left e
 --
 -- Same as (`>>=`).
 andThen :: Either e a -> (a -> Either e b) -> Either e b
-Right a `andThen` f = f a
-Left  e `andThen` _ = Left e
+andThen = (>>=)
 
 -- | Merges `Right` values using a given function
 -- or returns the first `Left` found.
@@ -264,40 +256,40 @@ newtype AndRight e a = AndRight { getAndRight :: Either e a }
   deriving ( Show, Read, Eq, Ord, Generic, Show1, Read1, Eq1, Ord1, Generic1, Show2, Read2, Eq2, Ord2
            , Functor, Bifunctor, Applicative, Monad, MonadFix, Foldable, Traversable, Data)
 
-instance (Monoid a) => Semigroup (AndRight e a)
+instance (Semigroup a) => Semigroup (AndRight e a) where
+  AndRight (Right a) <> AndRight (Right b) = AndRight (Right (a <> b))
+  AndRight (Right _) <> AndRight (Left e)  = AndRight (Left e)
+  AndRight (Left e)  <> _                  = AndRight (Left e)
+
 instance (Monoid a) => Monoid (AndRight e a) where
   mempty = AndRight (Right mempty)
-
-  AndRight (Right a) `mappend` AndRight (Right b) = AndRight (Right (a `mappend` b))
-  AndRight (Right _) `mappend` AndRight (Left e)  = AndRight (Left e)
-  AndRight (Left e)  `mappend` _                  = AndRight (Left e)
 
 -- | `Either` monoid on `Left`.
 newtype AndLeft e a = AndLeft { getAndLeft :: Either e a }
   deriving ( Show, Read, Eq, Ord, Generic, Show1, Read1, Eq1, Ord1, Generic1, Show2, Read2, Eq2, Ord2
            , Functor, Bifunctor, Applicative, Monad, MonadFix, Foldable, Traversable, Data)
 
-instance (Monoid e) => Semigroup (AndLeft e a)
+instance (Semigroup e) => Semigroup (AndLeft e a) where
+  AndLeft (Right _) <> andLeft           = andLeft
+  AndLeft (Left e)  <> AndLeft (Right _) = AndLeft (Left e)
+  AndLeft (Left e)  <> AndLeft (Left f)  = AndLeft (Left (e <> f))
+
 instance (Monoid e) => Monoid (AndLeft e a) where
   mempty = AndLeft (Left mempty)
-
-  AndLeft (Right _) `mappend` andLeft           = andLeft
-  AndLeft (Left e)  `mappend` AndLeft (Right _) = AndLeft (Left e)
-  AndLeft (Left e)  `mappend` AndLeft (Left f)  = AndLeft (Left (e `mappend` f))
 
 -- | `Either` monoid on `Right` and `Left`.
 newtype AndEither e a = AndEither { getAndEither :: Either e a }
   deriving ( Show, Read, Eq, Ord, Generic, Show1, Read1, Eq1, Ord1, Generic1, Show2, Read2, Eq2, Ord2
            , Functor, Bifunctor, Applicative, Monad, MonadFix, Foldable, Traversable, Data)
 
-instance (Monoid e, Monoid a) => Semigroup (AndEither e a)
+instance (Semigroup e, Semigroup a) => Semigroup (AndEither e a) where
+  AndEither (Right a) <> AndEither (Right b) = AndEither (Right (a <> b))
+  AndEither (Right _) <> AndEither (Left e)  = AndEither (Left e)
+  AndEither (Left e)  <> AndEither (Right _) = AndEither (Left e)
+  AndEither (Left e)  <> AndEither (Left f)  = AndEither (Left (e <> f))
+
 instance (Monoid e, Monoid a) => Monoid (AndEither e a) where
   mempty = AndEither (Right mempty)
-
-  AndEither (Right a) `mappend` AndEither (Right b) = AndEither (Right (a `mappend` b))
-  AndEither (Right _) `mappend` AndEither (Left e)  = AndEither (Left e)
-  AndEither (Left e)  `mappend` AndEither (Right _) = AndEither (Left e)
-  AndEither (Left e)  `mappend` AndEither (Left f)  = AndEither (Left (e `mappend` f))
 
 -- $DisjunctiveWrappers
 -- The disjunctive family discards `Left`s in favour of `Right`s. You should use:
@@ -318,37 +310,37 @@ newtype OrRight e a = OrRight { getOrRight :: Either e a }
   deriving ( Show, Read, Eq, Ord, Generic, Show1, Read1, Eq1, Ord1, Generic1, Show2, Read2, Eq2, Ord2
            , Functor, Bifunctor, Applicative, Monad, MonadFix, Foldable, Traversable, Data)
 
-instance (Monoid a) => Semigroup (OrRight e a)
+instance (Semigroup a) => Semigroup (OrRight e a) where
+  OrRight (Right a) <> OrRight (Right b) = OrRight (Right (a <> b))
+  OrRight (Right a) <> OrRight (Left _)  = OrRight (Right a)
+  OrRight (Left _)  <> orRight           = orRight
+
 instance (Monoid a) => Monoid (OrRight e a) where
   mempty = OrRight (Right mempty)
-
-  OrRight (Right a) `mappend` OrRight (Right b) = OrRight (Right (a `mappend` b))
-  OrRight (Right a) `mappend` OrRight (Left _)  = OrRight (Right a)
-  OrRight (Left _)  `mappend` orRight           = orRight
 
 -- | `Either` monoid on `Left`.
 newtype OrLeft e a = OrLeft { getOrLeft :: Either e a }
   deriving ( Show, Read, Eq, Ord, Generic, Show1, Read1, Eq1, Ord1, Generic1, Show2, Read2, Eq2, Ord2
            , Functor, Bifunctor, Applicative, Monad, MonadFix, Foldable, Traversable, Data)
 
-instance (Monoid e) => Semigroup (OrLeft e a)
+instance (Semigroup e) => Semigroup (OrLeft e a) where
+  OrLeft (Right a) <> _                = OrLeft (Right a)
+  OrLeft (Left _)  <> OrLeft (Right a) = OrLeft (Right a)
+  OrLeft (Left e)  <> OrLeft (Left f)  = OrLeft (Left (e <> f))
+
 instance (Monoid e) => Monoid (OrLeft e a) where
   mempty = OrLeft (Left mempty)
-
-  OrLeft (Right a) `mappend` _                = OrLeft (Right a)
-  OrLeft (Left _)  `mappend` OrLeft (Right a) = OrLeft (Right a)
-  OrLeft (Left e)  `mappend` OrLeft (Left f)  = OrLeft (Left (e `mappend` f))
 
 -- | `Either` monoid on `Right` and `Left`.
 newtype OrEither e a = OrEither { getOrEither :: Either e a }
   deriving ( Show, Read, Eq, Ord, Generic, Show1, Read1, Eq1, Ord1, Generic1, Show2, Read2, Eq2, Ord2
            , Functor, Bifunctor, Applicative, Monad, MonadFix, Foldable, Traversable, Data)
 
-instance (Monoid e, Monoid a) => Semigroup (OrEither e a)
+instance (Semigroup e, Semigroup a) => Semigroup (OrEither e a) where
+  OrEither (Right a) <> OrEither (Right b) = OrEither (Right (a <> b))
+  OrEither (Right a) <> OrEither (Left _)  = OrEither (Right a)
+  OrEither (Left _)  <> OrEither (Right a) = OrEither (Right a)
+  OrEither (Left e)  <> OrEither (Left f)  = OrEither (Left (e <> f))
+
 instance (Monoid e, Monoid a) => Monoid (OrEither e a) where
   mempty = OrEither (Left mempty)
-
-  OrEither (Right a) `mappend` OrEither (Right b) = OrEither (Right (a `mappend` b))
-  OrEither (Right a) `mappend` OrEither (Left _)  = OrEither (Right a)
-  OrEither (Left _)  `mappend` OrEither (Right a) = OrEither (Right a)
-  OrEither (Left e)  `mappend` OrEither (Left f)  = OrEither (Left (e `mappend` f))
