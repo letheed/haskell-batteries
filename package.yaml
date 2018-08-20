@@ -1,0 +1,15 @@
+name: batteries
+version: 0.1.0
+synopsis: Base types with batteries included
+description: Provides additional utility functions for basic types.
+author: Letheed <letheed@outlook.com>
+github: letheed/haskell-batteries
+copyright: 2016 Letheed
+license: BSD3
+category: Data
+ghc-options: -Wall
+dependencies:
+  - base >= 4.7 && < 5
+  - text >= 1.2
+library:
+  source-dirs: src
