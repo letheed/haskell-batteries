@@ -82,13 +82,13 @@ favorMap a _ Nothing  = Right a
 -- discarding the error value if any.
 maybeRight :: Either e a -> Maybe a
 maybeRight (Right a) = Just a
-maybeRight (Left _)  = Nothing
+maybeRight (Left  _) = Nothing
 
 -- | Converts an `Either` into a `Maybe`,
 -- discarding the success value if any.
 maybeLeft :: Either e a -> Maybe e
 maybeLeft (Right _) = Nothing
-maybeLeft (Left e)  = Just e
+maybeLeft (Left  e) = Just e
 
 -- | Converts a `Right` into a `Left`
 -- and a `Left` into a `Right`.
@@ -101,13 +101,13 @@ mirrorE = either Right Left
 -- Same as `fmap`.
 mapRight :: (a -> b) -> Either e a -> Either e b
 mapRight f (Right a) = Right (f a)
-mapRight _ (Left e)  = Left e
+mapRight _ (Left  e) = Left e
 
 -- | Maps over an `Either`, applying a function to a contained `Left` value,
 -- leaving a `Right` value untouched.
 mapLeft :: (e -> f) -> Either e a -> Either f a
 mapLeft _ (Right a) = Right a
-mapLeft f (Left e)  = Left (f e)
+mapLeft f (Left  e) = Left (f e)
 
 -- | Unwraps an `Either`, yielding the content of a `Right`
 -- or defaults to the value provided.
@@ -134,13 +134,13 @@ handleRight f = either id f
 -- Produces an error if the value is a `Left`.
 fromRight :: Either e a -> a
 fromRight (Right a) = a
-fromRight (Left _)  = error "fromRight: Left"
+fromRight (Left  _) = error "fromRight: Left"
 
 -- | Unwraps an `Either`, yielding the content of a `Left`.
 --
 -- Produces an error if the value is a `Right`.
 fromLeft :: Either e a -> e
-fromLeft (Left e)  = e
+fromLeft (Left  e) = e
 fromLeft (Right _) = error "fromLeft: Right"
 
 -- | Unwraps an `Either`, yielding the content of a `Right`.
@@ -149,7 +149,7 @@ fromLeft (Right _) = error "fromLeft: Right"
 -- with a message provided by the `String`.
 expect :: String -> Either e a -> a
 expect _      (Right a) = a
-expect errMsg (Left _)  = error errMsg
+expect errMsg (Left  _) = error errMsg
 
 -- | Unwraps an `Either`, yielding the content of a `Left`.
 --
@@ -157,7 +157,7 @@ expect errMsg (Left _)  = error errMsg
 -- with a message provided by the `String`.
 reject :: String -> Either e a -> e
 reject errMsg (Right _) = error errMsg
-reject _      (Left e)  = e
+reject _      (Left  e) = e
 
 -- -- | Produces an error with a message and a printable value.
 -- errorMsgVal :: (Show value) => String -> value -> a
@@ -213,20 +213,20 @@ Left  e `andThen` _ = Left e
 -- Same behaviour as `AndRight`.
 andWith :: Either e a -> (a -> b -> c) -> Either e b -> Either e c
 andWith (Right b) f (Right a) = Right (f b a)
-andWith (Right _) _ (Left e)  = Left e
-andWith (Left e)  _ _         = Left e
+andWith (Right _) _ (Left  e) = Left e
+andWith (Left  e) _ _         = Left e
 
 -- | Returns the first successful `Either`,
 -- or the last `Left` if only errors were found.
 orE :: Either e a -> Either f a -> Either f a
 Right a `orE` _ = Right a
-Left _  `orE` r = r
+Left  _ `orE` r = r
 
 -- | Returns the first successful `Either`
 -- or applies a function to the content of a `Left` on failure.
 orElse :: Either e a -> (e -> Either f a) -> Either f a
 Right a `orElse` _ = Right a
-Left e  `orElse` f = f e
+Left  e `orElse` f = f e
 
 -- | Merges `Right` values using a given function
 -- or returns the last `Left` if no `Right` was found.
@@ -234,8 +234,8 @@ Left e  `orElse` f = f e
 -- Same behaviour as `OrRight`.
 orWith :: Either e a -> (a -> a -> a) -> Either f a -> Either f a
 orWith (Right a) f (Right b) = Right (f a b)
-orWith (Right a) _ (Left _)  = Right a
-orWith (Left _)  _ r         = r
+orWith (Right a) _ (Left  _) = Right a
+orWith (Left  _) _ r         = r
 
 -- $MonoidWrappers
 -- These wrappers are useful if either your success type or your failure type

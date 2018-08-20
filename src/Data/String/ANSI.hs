@@ -32,13 +32,14 @@ toCyan = toColor Cyan
 
 toColor :: ANSIColor -> String -> String
 toColor color s = colorStr ++ s ++ resetStr
-  where colorStr = case color of
-          Black   -> "\ESC[90m"
-          Red     -> "\ESC[91m"
-          Green   -> "\ESC[92m"
-          Yellow  -> "\ESC[93m"
-          Blue    -> "\ESC[94m"
-          Magenta -> "\ESC[95m"
-          Cyan    -> "\ESC[96m"
-          White   -> "\ESC[97m"
-        resetStr = "\ESC[0m"
+  where
+    colorStr = case color of
+      Black   -> "\ESC[90m"
+      Red     -> "\ESC[91m"
+      Green   -> "\ESC[92m"
+      Yellow  -> "\ESC[93m"
+      Blue    -> "\ESC[94m"
+      Magenta -> "\ESC[95m"
+      Cyan    -> "\ESC[96m"
+      White   -> "\ESC[97m"
+    resetStr = "\ESC[0m"
