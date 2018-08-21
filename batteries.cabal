@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b5045a87f29b10f56e2bd0ca8ac33b46dfd0646205b81d07dc00c32a7383f844
+-- hash: 53edfc27765afeb22863428b1436d6b8f24bf3c914fdbd272d28a6e3b06ca9b3
 
 name:           batteries
 version:        0.1.0
@@ -30,6 +30,7 @@ library
       Data.Char.Batteries
       Data.Either.Batteries
       Data.Function.Batteries
+      Data.Ix.Batteries
       Data.List.Batteries
       Data.String.ANSI
       Data.String.Batteries
